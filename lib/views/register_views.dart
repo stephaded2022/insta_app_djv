@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:insta_app_djv/views/verify_email_view.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -33,6 +34,7 @@ class _RegisterViewState extends State<RegisterView> {
         title: const Text('Register'),
         backgroundColor: Colors.blue,
       ),
+
       body: Column(
         children: [
           TextField(
@@ -63,18 +65,45 @@ class _RegisterViewState extends State<RegisterView> {
                       email: email,
                       password: password,
                     );
-                print('Sucesss: ${userCredential.user?.email}');
+
+                final user = userCredential.user;
+                if (user != null && !user.emailVerified) {
+                  await user.sendEmailVerification();
+                }
+
+                // Navigate to verify screen so user can resend/check
+                if (mounted) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const VerifyEmailView(),
+                    ),
+                  );
+                }
               } on FirebaseAuthException catch (e) {
                 if (e.code == 'weak-password') {
-                  print('weak password ');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Weak password')),
+                  );
                 } else if (e.code == 'email-already-in-use') {
-                  print('Email is already in use');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Email already in use')),
+                  );
                 } else if (e.code == 'invalid-email') {
-                  print('Invalid email entered');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid email entered')),
+                  );
                 }
               }
             },
             child: const Text('Register'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(
+                context,
+              ).pushNamedAndRemoveUntil('/login/', (route) => false);
+            },
+            child: Text('Already have account? login here'),
           ),
         ],
       ),
